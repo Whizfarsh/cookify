@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Button } from "./Cookify";
 
 // GLOBAL FUNCTIONS AND VARIABLES
+function removeHtmlTags(str) {
+	return str.replace(/<\/?[^>]+(>|$)/g, "");
+}
 // -----------
 export default function RecipeSummary({
 	capitalizeFirstLetter,
@@ -12,7 +15,7 @@ export default function RecipeSummary({
 	const [tabName, setTabName] = useState("info");
 	const [recipeDetails, setRecipeDetails] = useState([]);
 
-	console.log(selectedId);
+	// console.log(selectedId);
 	useEffect(
 		function () {
 			async function getData() {
@@ -86,28 +89,29 @@ export default function RecipeSummary({
 								size={10}
 								padding="1rem"
 								height="3rem"
-								buttonText="Summary"
-								className={tabName === "summary" ? "btn-active" : ""}
-								onClick={() => handleTabName("summary")}
+								buttonText="Ingredients"
+								className={tabName === "ingredients" ? "btn-active" : ""}
+								onClick={() => handleTabName("ingredients")}
 							/>
 							<Button
 								size={10}
 								padding="1rem"
 								height="3rem"
-								buttonText="Ingredients"
-								className={tabName === "ingredients" ? "btn-active" : ""}
-								onClick={() => handleTabName("ingredients")}
+								buttonText="Instructions"
+								className={tabName === "instruction" ? "btn-active" : ""}
+								onClick={() => handleTabName("instruction")}
+							/>
+
+							<Button
+								size={10}
+								padding="1rem"
+								height="3rem"
+								buttonText="Summary"
+								className={tabName === "summary" ? "btn-active" : ""}
+								onClick={() => handleTabName("summary")}
 							/>
 						</div>
-						<div
-							// style={{
-							// 	border: "1px solid #bfe5c7",
-							// 	padding: "1rem",
-							// 	borderRadius: ".7rem",
-							// 	transition: "all 2s ease-in",
-							// }}
-							className="RS-info-show-details"
-						>
+						<div className="RS-info-show-details">
 							{tabName === "info" && (
 								<RecipeMiniInfo
 									reduceTitle={reduceTitle}
@@ -121,14 +125,21 @@ export default function RecipeSummary({
 							{tabName === "ingredients" && (
 								<ShortIngredients recipeDetails={recipeDetails} />
 							)}
+							{tabName === "instruction" && (
+								<FullDetails recipeDetails={recipeDetails} />
+							)}
 						</div>
 					</div>
 				</div>
+				{/* <div className="RS-full-details">
+					<FullDetails recipeDetails={recipeDetails} />
+				</div> */}
 			</div>
 		</>
 	);
 }
 
+// basic details
 function RecipeMiniInfo({ reduceTitle, capitalizeFirstLetter, recipeDetails }) {
 	// const getDishTypes = recipeDetails.dishTypes.includes("Breakfast");
 
@@ -199,7 +210,8 @@ function RecipeMiniInfo({ reduceTitle, capitalizeFirstLetter, recipeDetails }) {
 function QuickSummary({ recipeDetails }) {
 	return (
 		<p style={{ width: "100%", fontSize: "1.2rem" }}>
-			<span dangerouslySetInnerHTML={{ __html: recipeDetails.summary }}></span>
+			{/* <span dangerouslySetInnerHTML={{ __html: recipeDetails.summary }}></span> */}
+			{removeHtmlTags(recipeDetails.summary)}
 		</p>
 	);
 }
@@ -219,5 +231,21 @@ function ShortIngredients({ recipeDetails }) {
 				</ol>
 			}
 		</div>
+	);
+}
+// ----
+
+// More details
+function FullDetails({ recipeDetails }) {
+	console.log(recipeDetails);
+	// console.log(recipeDetails.analyzedInstructions[0].steps);
+	return (
+		<>
+			<div style={{ width: "100%" }} className="nutritions">
+				<p style={{ padding: "1rem", fontSize: "1.4rem" }}>
+					{removeHtmlTags(recipeDetails.instructions)}
+				</p>
+			</div>
+		</>
 	);
 }

@@ -104,8 +104,9 @@ button {
 
 /* Recipe Summary */
 .recipe-summary {
-	display: flex;
+	/* display: flex; */
 	align-items: center;
+	flex-direction: column;
 	justify-content: center;
 	margin: 0 auto;
 	/* height: 70vh; */

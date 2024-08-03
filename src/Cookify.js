@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import RecipeSummary from "./RecipeSummary";
 
 // Global functions and Variables
+const API_key = "c6414a7b8638405386aee74a1cee23e2";
 const capitalizeFirstLetter = (string) => {
 	return string.charAt(0).toUpperCase() + string.slice(1) + ", ";
 };
@@ -13,12 +14,13 @@ export default function Cookify() {
 
 	const [recipes, setRecipes] = useState([]);
 	const [selectedId, setSelectedId] = useState(null);
-	// const [isSelected, setIsSelected] = useState(false);
+
+	const [searchQuery, setSearchQuery] = useState("");
 
 	useEffect(function () {
 		async function getData() {
 			const res = await fetch(
-				`https://api.spoonacular.com/recipes/random?apiKey=c6414a7b8638405386aee74a1cee23e2&number=32&include-tags="whole30"`
+				`https://api.spoonacular.com/recipes/random?apiKey=${API_key}&number=32&include-tags="whole30"`
 			);
 			const data = await res.json();
 			setRecipes(data.recipes);
@@ -27,13 +29,57 @@ export default function Cookify() {
 	}, []);
 	// console.log(recipes);
 
-	useEffect(function () {}, []);
+	// useeffect for search
+	useEffect(
+		function () {
+			// console.log(searchQuery);
+			try {
+				async function getData() {
+					const res = await fetch(
+						`https://api.spoonacular.com/recipes/findByIngredients?apiKey=${API_key}&ingredients=${searchQuery}&number=30`
+					);
+					const data = await res.json();
+					console.log(data);
+					setRecipes(data);
+				}
+				getData();
+			} catch (err) {}
+		},
+		[searchQuery]
+	);
+	// -----------------------
 
 	function handleIdSelection(id) {
 		setSelectedId(id === selectedId ? "" : id);
-		// setIsSelected((s) => !s);
-		// console.log(id);
 	}
+
+	// USER LOGIN FUNCTIONS
+	function handleUser(e) {
+		e.preventDefault();
+
+		setIsLoggedIn(true);
+		// setIsUser(e.target.value);
+		// console.log(isUser);
+	}
+
+	function handleUserOnChange(e) {
+		setIsUser(e.target.value);
+		// console.log(e.target.value);
+	}
+	// ------------------
+
+	//RECIPE SEARCH FUNCTIONS
+	function handleSearch(e) {
+		e.preventDefault();
+	}
+	function handleSearchInput(e) {
+		const inputValue = e.target.value;
+
+		if (inputValue.length < 3) return;
+
+		setSearchQuery(inputValue);
+	}
+	// ---------------------
 	return (
 		<div>
 			{isLoggedin ? (
@@ -47,7 +93,12 @@ export default function Cookify() {
 								columnGap: "1.3rem",
 							}}
 						>
-							<FormInput placeholderText={"Search here..."} size={0.7} />
+							<FormInput
+								placeholderText={"Search here..."}
+								size={0.7}
+								onHandleSubmit={handleSearch}
+								onHandleChange={handleSearchInput}
+							/>
 							<UserGreeting isUser={isUser} />
 						</div>
 					</NavSection>
@@ -69,8 +120,10 @@ export default function Cookify() {
 					<FormInput
 						placeholderText="Your Name Here..."
 						setIsUser={setIsUser}
-						isUser={isUser}
-						setIsLoggedIn={setIsLoggedIn}
+						onValue={isUser}
+						onHandleSubmit={handleUser}
+						onHandleChange={handleUserOnChange}
+						// setIsLoggedIn={setIsLoggedIn}
 					/>
 
 					{/* <WelcomeUser isUser={isUser} /> */}
@@ -88,6 +141,7 @@ export function Button({
 	padding = "1.6rem",
 	// width = "6rem",
 	height = `4.5rem`,
+	textTransform = "Capitalize",
 	onClick,
 }) {
 	const homeBtnStyle = {
@@ -103,6 +157,7 @@ export function Button({
 		borderRadius: "1rem",
 		padding: padding,
 		fontWeight: 700,
+		textTransform: textTransform,
 		// backg
 	};
 	// return <button className={className}>{buttonText}</button>;
@@ -133,26 +188,18 @@ function Logo({ size }) {
 function FormInput({
 	placeholderText,
 	size = 1.2,
-	setIsUser,
-	isUser,
-	setIsLoggedIn,
+	onValue,
+	onHandleSubmit,
+	onHandleChange,
 }) {
-	// const userInput = useRef(null);
-
-	function handleUser(e) {
-		e.preventDefault();
-
-		setIsLoggedIn(true);
-		console.log(isUser);
-	}
 	return (
-		<form onSubmit={handleUser}>
+		<form onSubmit={onHandleSubmit}>
 			<input
 				style={{ width: `${size * 33}rem`, height: `${size * 3}rem` }}
 				className="form-input"
 				type="text"
-				value={isUser}
-				onChange={(e) => setIsUser(e.target.value)}
+				value={onValue}
+				onChange={onHandleChange}
 				// ref={userInput}
 				placeholder={placeholderText}
 				required
