@@ -3,6 +3,7 @@ import RecipeSummary from "./RecipeSummary";
 
 // Global functions and Variables
 const API_key = "c6414a7b8638405386aee74a1cee23e2";
+// const API_key = "1f390112146b438c9fff53abe569e602";
 const capitalizeFirstLetter = (string) => {
 	return string.charAt(0).toUpperCase() + string.slice(1) + ", ";
 };
@@ -16,36 +17,78 @@ export default function Cookify() {
 	const [selectedId, setSelectedId] = useState(null);
 
 	const [searchQuery, setSearchQuery] = useState("");
+	const [error, setError] = useState("");
 
-	useEffect(function () {
-		async function getData() {
-			const res = await fetch(
-				`https://api.spoonacular.com/recipes/random?apiKey=${API_key}&number=32&include-tags="whole30"`
-			);
-			const data = await res.json();
-			setRecipes(data.recipes);
-		}
-		getData();
-	}, []);
+	useEffect(
+		function () {
+			if (!isLoggedin) return;
+
+			const controller = new AbortController();
+			async function getData() {
+				try {
+					setError("");
+					const res = await fetch(
+						`https://api.spoonacular.com/recipes/random?apiKey=${API_key}&number=32&include-tags="whole30"`,
+						{ signal: controller.signal }
+					);
+					if (!res.ok) throw new Error("Couldn't fetch recipes");
+					const data = await res.json();
+					if (data.Response === "False") throw new Error("Recipe not found");
+
+					setRecipes(data.recipes);
+					setError("");
+				} catch (err) {
+					console.log(err.message);
+				}
+			}
+			getData();
+
+			return function () {
+				controller.abort();
+			};
+		},
+		[isLoggedin]
+	);
 	// console.log(recipes);
 
 	// useeffect for search
 	useEffect(
 		function () {
-			// console.log(searchQuery);
-			try {
-				async function getData() {
+			if (!isLoggedin || searchQuery === "") return;
+			const controller = new AbortController();
+
+			async function getData() {
+				try {
+					setError("");
+
 					const res = await fetch(
-						`https://api.spoonacular.com/recipes/findByIngredients?apiKey=${API_key}&ingredients=${searchQuery}&number=30`
+						`https://api.spoonacular.com/recipes/findByIngredients?apiKey=${API_key}&ingredients=${searchQuery}&number=30`,
+						{ signal: controller.signal }
 					);
+
+					if (!res.ok) throw new Error("Could not fetch recipes");
+
 					const data = await res.json();
-					console.log(data);
+
+					if (data.Response === "False" || data.length === 0)
+						throw new Error("Recipe not found");
+
 					setRecipes(data);
+					setError("");
+				} catch (err) {
+					if (err.name !== "AbortError") {
+						setError(err.message);
+					}
+					console.log(err.message);
 				}
-				getData();
-			} catch (err) {}
+			}
+			getData();
+			return function () {
+				controller.abort();
+				// setSearchQuery("");
+			};
 		},
-		[searchQuery]
+		[searchQuery, error, isLoggedin]
 	);
 	// -----------------------
 
@@ -200,7 +243,6 @@ function FormInput({
 				type="text"
 				value={onValue}
 				onChange={onHandleChange}
-				// ref={userInput}
 				placeholder={placeholderText}
 				required
 			/>
@@ -247,6 +289,7 @@ function RecipesLists({ recipes, onSelectedID }) {
 }
 
 function Lists({ recipe, onSelectedID }) {
+	// console.log(recipe);
 	return (
 		<li className="recipe-list" onClick={() => onSelectedID(recipe.id)}>
 			<img style={{ width: "100%" }} src={recipe.image} alt="" />
